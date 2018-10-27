@@ -38,7 +38,9 @@ class ContentTypeGateTransformer(BlockStructureTransformer):
         for block_key in block_structure.topological_traversal():
             graded = block_structure.get_xblock_field(block_key, 'graded')
             has_score = block_structure.get_xblock_field(block_key, 'has_score')
-            if graded and has_score:
+            weight_not_zero = block_structure.get_xblock_field(block_key, 'weight') != 0
+            problem_eligible_for_content_gating = graded and has_score and weight_not_zero
+            if problem_eligible_for_content_gating:
                 current_access = block_structure.get_xblock_field(block_key, 'group_access')
                 if current_access is None:
                     current_access = {}
