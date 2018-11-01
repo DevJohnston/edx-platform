@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
 
-import analytics
 import pytz
 from boto.exception import BotoServerError  # this is a super-class of SESError and catches connection errors
 from config_models.models import ConfigurationModel
@@ -40,6 +39,7 @@ from openedx.core.djangoapps.site_configuration import helpers as configuration_
 from shoppingcart.pdf import PDFInvoice
 from student.models import CourseEnrollment, EnrollStatusChange
 from student.signals import UNENROLL_DONE
+from track import segment
 from util.query import use_read_replica_if_available
 from xmodule.modulestore.django import modulestore
 
@@ -520,19 +520,12 @@ class Order(models.Model):
 
         """
         try:
-            if settings.LMS_SEGMENT_KEY:
-                tracking_context = tracker.get_tracker().resolve_context()
-                analytics.track(self.user.id, event_name, {
-                    'orderId': self.id,
-                    'total': str(self.total_cost),
-                    'currency': self.currency,
-                    'products': [item.analytics_data() for item in orderitems]
-                }, context={
-                    'ip': tracking_context.get('ip'),
-                    'Google Analytics': {
-                        'clientId': tracking_context.get('client_id')
-                    }
-                })
+            segment.track(self.user.id, event_name, {
+                'orderId': self.id,
+                'total': str(self.total_cost),
+                'currency': self.currency,
+                'products': [item.analytics_data() for item in orderitems]
+            })
 
         except Exception:  # pylint: disable=broad-except
             # Capturing all exceptions thrown while tracking analytics events. We do not want

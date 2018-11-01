@@ -66,7 +66,6 @@ from collections import OrderedDict
 from logging import getLogger
 from smtplib import SMTPException
 
-import analytics
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail.message import EmailMessage
@@ -85,6 +84,7 @@ from openedx.core.djangoapps.user_authn import cookies as user_authn_cookies
 from lms.djangoapps.verify_student.models import SSOVerification
 from lms.djangoapps.verify_student.utils import earliest_allowed_verification_date
 from third_party_auth.utils import user_exists
+from track import segment
 
 from . import provider
 
@@ -657,23 +657,11 @@ def login_analytics(strategy, auth_entry, current_partial=None, *args, **kwargs)
     elif auth_entry in [AUTH_ENTRY_ACCOUNT_SETTINGS]:
         event_name = 'edx.bi.user.account.linked'
 
-    if event_name is not None and hasattr(settings, 'LMS_SEGMENT_KEY') and settings.LMS_SEGMENT_KEY:
-        tracking_context = tracker.get_tracker().resolve_context()
-        analytics.track(
-            kwargs['user'].id,
-            event_name,
-            {
-                'category': "conversion",
-                'label': None,
-                'provider': kwargs['backend'].name
-            },
-            context={
-                'ip': tracking_context.get('ip'),
-                'Google Analytics': {
-                    'clientId': tracking_context.get('client_id')
-                }
-            }
-        )
+    segment.track(kwargs['user'].id, event_name, {
+        'category': "conversion",
+        'label': None,
+        'provider': kwargs['backend'].name
+    })
 
 
 @partial.partial
