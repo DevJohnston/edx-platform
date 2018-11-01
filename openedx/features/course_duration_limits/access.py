@@ -3,7 +3,7 @@
 Contains code related to computing content gating course duration limits
 and course access based on these limits.
 """
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.apps import apps
 from django.utils import timezone
