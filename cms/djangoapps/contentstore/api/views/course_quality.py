@@ -99,13 +99,12 @@ class CourseQualityView(DeveloperErrorViewMixin, GenericAPIView):
         with store.bulk_operations(course_key):
             course = store.get_course(course_key, depth=self._required_course_depth(request, all_requested))
             # Added for EDUCATOR-3660
-            course_key_harward = True if course_key == 'course-v1:HarvardX+SW12.1x+2016' else False
+            course_key_harward = True if str(course_key) == 'course-v1:HarvardX+SW12.1x+2016' else False
 
             response = dict(
                 is_self_paced=course.self_paced,
             )
-            if not (waffle.switch_is_active('disable_quality_HarvardX+SW12.1x+2016') and
-                    course_key == 'course-v1:HarvardX+SW12.1x+2016'):
+            if not waffle.switch_is_active('CourseWaffleFlag_' + str(course_key)):
                 if get_bool_param(request, 'sections', all_requested):
                     if course_key_harward:
                         response.update(
